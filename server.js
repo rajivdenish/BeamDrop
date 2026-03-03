@@ -69,12 +69,12 @@ app.use((req, res, next) => {
 const requireAuth = (req, res, next) => {
     const { sessionId } = req.cookies;
     if (!sessionId) {
-        return res.status(401).redirect('/login.html');
+        return res.status(401).redirect('login.html');
     }
     const db = loadDB();
     if (!db.sessions[sessionId]) {
         res.clearCookie('sessionId');
-        return res.status(401).redirect('/login.html');
+        return res.status(401).redirect('login.html');
     }
     req.userId = db.sessions[sessionId];
     next();
