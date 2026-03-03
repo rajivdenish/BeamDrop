@@ -1,0 +1,1951 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+    <title>BeamDrop</title>
+    <meta name="description" content="Drop files. They arrive. No cloud, no wait.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0
+        }
+
+        :root {
+            --bg: #0D0D14;
+            --surface: #17171F;
+            --surface2: #1E1E2A;
+            --border: rgba(255, 255, 255, 0.07);
+            --accent: #7C5BFA;
+            --accent-l: rgba(124, 91, 250, 0.15);
+            --accent-g: rgba(124, 91, 250, 0.4);
+            --text: #F0EFF8;
+            --text2: #8685A0;
+            --text3: #4D4C63;
+            --ok: #10D98F;
+            --ok-l: rgba(16, 217, 143, 0.15);
+            --warn: #F5A623;
+            --warn-l: rgba(245, 166, 35, 0.15);
+            --err: #FF4D6A;
+            --err-l: rgba(255, 77, 106, 0.15);
+            --r: 18px;
+            --rsm: 12px;
+        }
+
+        html,
+        body {
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            -webkit-font-smoothing: antialiased
+        }
+
+        .screen {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            transition: opacity .25s, transform .25s
+        }
+
+        .screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(14px)
+        }
+
+        /* ── LOGIN ── */
+        #loginScreen {
+            align-items: center;
+            justify-content: center;
+            padding: 2rem
+        }
+
+        .login-card {
+            width: 100%;
+            max-width: 360px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--r);
+            padding: 2.5rem
+        }
+
+        .login-logo {
+            font-size: 2.2rem;
+            margin-bottom: .4rem
+        }
+
+        .login-title {
+            font-size: 1.4rem;
+            font-weight: 700
+        }
+
+        .login-sub {
+            color: var(--text2);
+            font-size: .85rem;
+            margin-bottom: 2rem;
+            margin-top: .2rem
+        }
+
+        .field {
+            margin-bottom: 1rem
+        }
+
+        .field label {
+            display: block;
+            font-size: .7rem;
+            font-weight: 600;
+            color: var(--text2);
+            margin-bottom: .35rem;
+            text-transform: uppercase;
+            letter-spacing: .05em
+        }
+
+        .field input {
+            width: 100%;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: var(--rsm);
+            color: var(--text);
+            padding: .75rem 1rem;
+            font-size: .95rem;
+            font-family: inherit;
+            outline: none;
+            transition: border-color .2s, box-shadow .2s
+        }
+
+        .field input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-l)
+        }
+
+        #loginError {
+            color: var(--err);
+            font-size: .78rem;
+            min-height: 1.1em;
+            margin-bottom: .6rem
+        }
+
+        .btn-full {
+            width: 100%;
+            padding: .85rem;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: var(--rsm);
+            font-size: .95rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: opacity .15s, transform .1s
+        }
+
+        .btn-full:hover {
+            opacity: .88
+        }
+
+        .btn-full:active {
+            transform: scale(.98)
+        }
+
+        /* ── APP TOPBAR ── */
+        #appScreen {
+            background: var(--bg);
+            overflow: hidden
+        }
+
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: .9rem 1.25rem;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+            position: relative;
+            z-index: 10
+        }
+
+        .topbar-brand {
+            font-size: .95rem;
+            font-weight: 700;
+            letter-spacing: -.01em
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: .6rem
+        }
+
+        .conn-pill {
+            display: flex;
+            align-items: center;
+            gap: .4rem;
+            padding: .3rem .7rem;
+            border-radius: 100px;
+            font-size: .72rem;
+            font-weight: 500;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            transition: all .3s;
+            max-width: 190px
+        }
+
+        .conn-pill.offline {
+            color: var(--text3)
+        }
+
+        .conn-pill.connecting {
+            color: var(--warn);
+            background: var(--warn-l);
+            border-color: rgba(245, 166, 35, .2)
+        }
+
+        .conn-pill.online {
+            color: var(--ok);
+            background: var(--ok-l);
+            border-color: rgba(16, 217, 143, .2)
+        }
+
+        .conn-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            background: currentColor
+        }
+
+        .conn-pill.online .conn-dot {
+            animation: pulse 2s ease-in-out infinite
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: .35
+            }
+        }
+
+        #connLabel {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap
+        }
+
+        .icon-btn {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            width: 34px;
+            height: 34px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: .82rem;
+            transition: background .15s;
+            flex-shrink: 0;
+            color: var(--text2)
+        }
+
+        .icon-btn:hover {
+            background: var(--surface)
+        }
+
+        /* ── MAIN SCROLL ── */
+        .main-scroll {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 1.5rem 1.25rem 140px;
+            -webkit-overflow-scrolling: touch
+        }
+
+        ::-webkit-scrollbar {
+            width: 3px
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--text3);
+            border-radius: 2px
+        }
+
+        /* ── NO DEVICE VIEW ── */
+        #noDeviceView {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            min-height: calc(100vh - 180px);
+            gap: 1rem
+        }
+
+        .wait-spin {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            border: 2px solid var(--accent-l);
+            border-top-color: var(--accent);
+            animation: spin 1.1s linear infinite;
+            margin-bottom: .25rem
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg)
+            }
+        }
+
+        .wait-title {
+            font-size: 1.1rem;
+            font-weight: 600
+        }
+
+        .wait-sub {
+            color: var(--text2);
+            font-size: .85rem;
+            line-height: 1.6;
+            max-width: 260px
+        }
+
+        .pill-btn {
+            padding: .65rem 1.4rem;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 100px;
+            font-size: .85rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: opacity .15s;
+            margin-top: .25rem
+        }
+
+        .pill-btn:hover {
+            opacity: .82
+        }
+
+        /* ── CONNECTED VIEW ── */
+        #connectedView {
+            display: none;
+            flex-direction: column;
+            gap: 1.1rem
+        }
+
+        #connectedView.visible {
+            display: flex
+        }
+
+        /* ── DROP ZONE ── */
+        .drop-zone {
+            border: 2px dashed var(--border);
+            border-radius: var(--r);
+            padding: 2.75rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all .2s;
+            background: var(--surface);
+            position: relative;
+            overflow: hidden
+        }
+
+        .drop-zone:hover,
+        .drop-zone.drag-over {
+            border-color: var(--accent);
+            background: var(--accent-l)
+        }
+
+        .drop-zone.drag-over {
+            transform: scale(1.01)
+        }
+
+        .drop-zone input[type=file] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+            width: 100%;
+            height: 100%
+        }
+
+        .drop-icon {
+            font-size: 2.2rem;
+            margin-bottom: .6rem
+        }
+
+        .drop-title {
+            font-size: 1.05rem;
+            font-weight: 600;
+            margin-bottom: .2rem
+        }
+
+        .drop-sub {
+            color: var(--text2);
+            font-size: .8rem
+        }
+
+        /* ── QUICK ACTIONS ── */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: .7rem
+        }
+
+        .action-btn {
+            padding: .72rem 1rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--rsm);
+            color: var(--text);
+            font-size: .83rem;
+            font-weight: 500;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all .15s;
+            text-align: center
+        }
+
+        .action-btn:hover {
+            background: var(--surface2);
+            border-color: var(--accent);
+            color: var(--accent)
+        }
+
+        /* ── MSG INPUT ── */
+        #msgInputWrap {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--rsm);
+            padding: .45rem;
+            display: none;
+            align-items: center;
+            gap: .4rem
+        }
+
+        #msgInputWrap.visible {
+            display: flex
+        }
+
+        #chatInput {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text);
+            font-size: .88rem;
+            font-family: inherit;
+            outline: none;
+            padding: .35rem .5rem
+        }
+
+        #chatInput::placeholder {
+            color: var(--text3)
+        }
+
+        .send-btn {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 9px;
+            padding: .45rem .9rem;
+            font-size: .78rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: opacity .15s;
+            flex-shrink: 0
+        }
+
+        .send-btn:hover {
+            opacity: .85
+        }
+
+        .attach-btn {
+            background: transparent;
+            border: none;
+            color: var(--text2);
+            font-size: 1.05rem;
+            cursor: pointer;
+            padding: .3rem;
+            flex-shrink: 0
+        }
+
+        /* ── CHAT MESSAGES ── */
+        #chatMessages {
+            display: flex;
+            flex-direction: column;
+            gap: .4rem
+        }
+
+        /* ── RECENT ── */
+        .section-label {
+            font-size: .68rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            color: var(--text3);
+            margin-bottom: .5rem
+        }
+
+        #recentList {
+            display: flex;
+            flex-direction: column;
+            gap: .5rem
+        }
+
+        .recent-item {
+            display: flex;
+            align-items: center;
+            gap: .7rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--rsm);
+            padding: .7rem 1rem
+        }
+
+        .recent-icon {
+            font-size: 1.2rem;
+            flex-shrink: 0
+        }
+
+        .recent-info {
+            flex: 1;
+            min-width: 0
+        }
+
+        .recent-name {
+            font-size: .83rem;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis
+        }
+
+        .recent-meta {
+            font-size: .68rem;
+            color: var(--text2);
+            margin-top: 2px
+        }
+
+        .save-btn {
+            background: var(--accent-l);
+            color: var(--accent);
+            border: none;
+            border-radius: 8px;
+            padding: .3rem .65rem;
+            font-size: .72rem;
+            font-family: inherit;
+            cursor: pointer;
+            transition: background .15s;
+            flex-shrink: 0;
+            text-decoration: none;
+            display: inline-block
+        }
+
+        .save-btn:hover {
+            background: var(--accent);
+            color: #fff
+        }
+
+        .empty-item {
+            color: var(--text3);
+            font-size: .85rem;
+            text-align: center;
+            padding: 1.5rem 0
+        }
+
+        /* ── BOTTOM SHEET ── */
+        .bottom-sheet {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            border-radius: 20px 20px 0 0;
+            transform: translateY(calc(100% - 50px));
+            transition: transform .35s cubic-bezier(.32, .72, 0, 1);
+            z-index: 50;
+            max-height: 72vh
+        }
+
+        .bottom-sheet.open {
+            transform: translateY(0)
+        }
+
+        .sheet-handle-row {
+            padding: .65rem 1.25rem .4rem;
+            display: flex;
+            align-items: center;
+            gap: .7rem;
+            cursor: pointer;
+            -webkit-user-select: none;
+            user-select: none
+        }
+
+        .sheet-handle {
+            width: 34px;
+            height: 4px;
+            border-radius: 2px;
+            background: var(--text3)
+        }
+
+        .sheet-title {
+            font-size: .83rem;
+            font-weight: 600;
+            color: var(--text2)
+        }
+
+        .badge {
+            background: var(--accent);
+            color: #fff;
+            border-radius: 100px;
+            font-size: .62rem;
+            font-weight: 700;
+            padding: .1rem .4rem;
+            min-width: 17px;
+            text-align: center;
+            display: none
+        }
+
+        .sheet-body {
+            padding: .25rem 1.25rem 2rem;
+            overflow-y: auto;
+            max-height: calc(72vh - 50px)
+        }
+
+        .act-item {
+            padding: .7rem 0;
+            border-bottom: 1px solid var(--border)
+        }
+
+        .act-item:last-child {
+            border-bottom: none
+        }
+
+        .act-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: .35rem
+        }
+
+        .act-name {
+            font-size: .83rem;
+            font-weight: 500
+        }
+
+        .act-pct {
+            font-size: .75rem;
+            color: var(--text2)
+        }
+
+        .prog-track {
+            height: 3px;
+            background: var(--surface2);
+            border-radius: 2px;
+            overflow: hidden
+        }
+
+        .prog-fill {
+            height: 100%;
+            background: var(--accent);
+            border-radius: 2px;
+            transition: width .3s
+        }
+
+        /* ── TRANSFER PILL ── */
+        #transferAnim {
+            position: fixed;
+            top: 4.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: var(--r);
+            padding: .85rem 1.25rem;
+            display: none;
+            align-items: center;
+            gap: .85rem;
+            z-index: 100;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, .5);
+            min-width: 210px
+        }
+
+        .t-peer {
+            font-size: 1.4rem
+        }
+
+        .t-dots {
+            display: flex;
+            gap: 3px
+        }
+
+        .t-dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: var(--accent);
+            animation: tdot 1.2s ease-in-out infinite
+        }
+
+        .t-dot:nth-child(2) {
+            animation-delay: .2s
+        }
+
+        .t-dot:nth-child(3) {
+            animation-delay: .4s
+        }
+
+        @keyframes tdot {
+
+            0%,
+            80%,
+            100% {
+                opacity: .2;
+                transform: scale(.8)
+            }
+
+            40% {
+                opacity: 1;
+                transform: scale(1)
+            }
+        }
+
+        .t-info {
+            flex: 1
+        }
+
+        #t-direction {
+            font-size: .7rem;
+            color: var(--text2)
+        }
+
+        #t-progress {
+            font-size: .88rem;
+            font-weight: 600
+        }
+
+        #t-speed {
+            font-size: .68rem;
+            color: var(--text3)
+        }
+
+        /* ── SETTINGS ── */
+        #settingsPanel {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, .65);
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            z-index: 200;
+            display: none;
+            align-items: flex-end;
+            justify-content: center
+        }
+
+        #settingsPanel.visible {
+            display: flex
+        }
+
+        .settings-card {
+            width: 100%;
+            max-width: 480px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px 20px 0 0;
+            padding: 1.5rem 1.5rem 2.5rem;
+            max-height: 85vh;
+            overflow-y: auto
+        }
+
+        .settings-hdr {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem
+        }
+
+        .settings-hdr h2 {
+            font-size: 1.05rem;
+            font-weight: 700
+        }
+
+        .close-btn {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            color: var(--text2);
+            font-size: .9rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center
+        }
+
+        .s-section {
+            margin-bottom: 1.5rem
+        }
+
+        .s-label {
+            font-size: .67rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .07em;
+            color: var(--text3);
+            margin-bottom: .65rem
+        }
+
+        .s-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: .65rem 0;
+            border-bottom: 1px solid var(--border)
+        }
+
+        .s-item:last-child {
+            border-bottom: none
+        }
+
+        .s-item-title {
+            font-size: .88rem
+        }
+
+        .s-item-sub {
+            font-size: .72rem;
+            color: var(--text2)
+        }
+
+        .toggle {
+            width: 42px;
+            height: 23px;
+            border-radius: 12px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            cursor: pointer;
+            position: relative;
+            transition: background .2s, border-color .2s;
+            flex-shrink: 0
+        }
+
+        .toggle.on {
+            background: var(--accent);
+            border-color: var(--accent)
+        }
+
+        .toggle::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 17px;
+            height: 17px;
+            border-radius: 50%;
+            background: #fff;
+            transition: transform .2s;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, .3)
+        }
+
+        .toggle.on::after {
+            transform: translateX(19px)
+        }
+
+        #qrWrap {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: .75rem;
+            padding: .75rem 0
+        }
+
+        #qrWrap.visible {
+            display: flex
+        }
+
+        .qr-url {
+            font-size: .72rem;
+            color: var(--text2);
+            text-align: center;
+            word-break: break-all
+        }
+
+        .logout-btn {
+            width: 100%;
+            padding: .72rem;
+            background: var(--err-l);
+            color: var(--err);
+            border: 1px solid rgba(255, 77, 106, .2);
+            border-radius: var(--rsm);
+            font-size: .88rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: background .15s;
+            margin-top: .5rem
+        }
+
+        .logout-btn:hover {
+            background: var(--err);
+            color: #fff
+        }
+
+        /* ── STATS BAR ── */
+        .stats-bar {
+            display: flex;
+            gap: .5rem;
+            margin-bottom: .75rem
+        }
+
+        .stat-card {
+            flex: 1;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--rsm);
+            padding: .7rem .85rem
+        }
+
+        .stat-val {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text)
+        }
+
+        .stat-lbl {
+            font-size: .63rem;
+            color: var(--text3);
+            margin-top: 2px;
+            text-transform: uppercase;
+            letter-spacing: .05em
+        }
+
+        /* ── LAST DEVICE CARD ── */
+        .last-device-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--rsm);
+            padding: .85rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: .75rem;
+            margin-top: 1.5rem;
+            max-width: 320px
+        }
+
+        .ld-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0
+        }
+
+        .ld-name {
+            font-size: .88rem;
+            font-weight: 600
+        }
+
+        .ld-meta {
+            font-size: .7rem;
+            color: var(--text2);
+            margin-top: 2px
+        }
+
+        /* ── PREVIEW MODAL ── */
+        #previewModal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, .93);
+            z-index: 300;
+            display: none;
+            flex-direction: column;
+            align-items: center
+        }
+
+        #previewModal.open {
+            display: flex
+        }
+
+        .prev-bar {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: .85rem 1.25rem;
+            flex-shrink: 0;
+            border-bottom: 1px solid rgba(255, 255, 255, .07)
+        }
+
+        .prev-name {
+            font-size: .88rem;
+            font-weight: 600;
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-right: .75rem
+        }
+
+        .prev-acts {
+            display: flex;
+            align-items: center;
+            gap: .6rem;
+            flex-shrink: 0
+        }
+
+        .prev-dl {
+            background: var(--accent-l);
+            color: var(--accent);
+            border: none;
+            border-radius: 8px;
+            padding: .35rem .8rem;
+            font-size: .75rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block
+        }
+
+        .prev-dl:hover {
+            background: var(--accent);
+            color: #fff
+        }
+
+        .prev-x {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            color: var(--text2);
+            cursor: pointer;
+            font-size: .9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center
+        }
+
+        .prev-body {
+            flex: 1;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.25rem;
+            overflow: auto
+        }
+
+        .prev-body img {
+            max-width: 100%;
+            max-height: calc(100vh - 110px);
+            object-fit: contain;
+            border-radius: 12px
+        }
+
+        .prev-body video,
+        .prev-body audio {
+            max-width: 100%;
+            border-radius: 10px;
+            outline: none
+        }
+
+        .prev-body iframe {
+            width: 100%;
+            height: calc(100vh - 130px);
+            border: none;
+            border-radius: 10px;
+            background: #fff
+        }
+
+        .prev-body pre {
+            color: var(--text2);
+            font-size: .78rem;
+            line-height: 1.65;
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-width: 100%;
+            max-height: calc(100vh - 130px);
+            overflow: auto;
+            background: var(--surface);
+            padding: 1.25rem;
+            border-radius: 10px
+        }
+
+        .prev-no {
+            text-align: center;
+            color: var(--text2)
+        }
+
+        .prev-no .pi {
+            font-size: 3rem;
+            margin-bottom: .75rem
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ═══ LOGIN ═══ -->
+    <div id="loginScreen" class="screen">
+        <div class="login-card">
+            <div class="login-logo">⚡</div>
+            <div class="login-title">BeamDrop</div>
+            <div class="login-sub">Drop files. They arrive. No cloud.</div>
+            <div class="field"><label>Email</label><input type="email" id="loginEmail" placeholder="you@example.com"
+                    autocomplete="email"></div>
+            <div class="field"><label>Password</label><input type="password" id="loginPassword" placeholder="••••••••"
+                    autocomplete="current-password"></div>
+            <div id="loginError"></div>
+            <button class="btn-full" id="loginBtn">Sign In</button>
+        </div>
+    </div>
+
+    <!-- ═══ APP ═══ -->
+    <div id="appScreen" class="screen hidden">
+
+        <!-- Top Bar -->
+        <header class="topbar">
+            <div class="topbar-brand">⚡ BeamDrop</div>
+            <div class="topbar-right">
+                <div id="connPill" class="conn-pill offline">
+                    <div class="conn-dot"></div>
+                    <span id="connLabel">No device</span>
+                </div>
+                <button class="icon-btn" id="gearBtn" title="Settings">⚙️</button>
+            </div>
+        </header>
+
+        <!-- Main -->
+        <div class="main-scroll">
+
+            <!-- No device -->
+            <div id="noDeviceView">
+                <div class="wait-spin"></div>
+                <div class="wait-title">Searching your network…</div>
+                <div class="wait-sub">Open BeamDrop on another device on the same Wi-Fi</div>
+                <button class="pill-btn" id="pairBtn">+ Pair New Device</button>
+                <!-- Last session stats -->
+                <div id="lastDeviceCard" class="last-device-card"
+                    style="display:none;margin-top:1.5rem;max-width:320px">
+                    <div class="last-device-icon" id="ldIcon">📱</div>
+                    <div>
+                        <div class="last-device-name" id="ldName">Unknown device</div>
+                        <div class="last-device-meta" id="ldMeta">Last connected</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Connected -->
+            <div id="connectedView">
+
+                <!-- Drop Zone -->
+                <div class="drop-zone" id="dropZone">
+                    <input type="file" id="fileInput" multiple accept="*/*">
+                    <div class="drop-icon">📂</div>
+                    <div class="drop-title">Drop files here</div>
+                    <div class="drop-sub">or tap to choose · any format · up to 2 GB</div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="quick-actions">
+                    <button class="action-btn" id="pasteBtn">📋 Paste & Send</button>
+                    <button class="action-btn" id="msgToggleBtn">💬 Message</button>
+                </div>
+
+                <!-- Message input -->
+                <div id="msgInputWrap">
+                    <input type="text" id="chatInput" placeholder="Type a message…">
+                    <input type="file" id="chatFileInput" multiple accept="*/*" style="display:none">
+                    <button class="attach-btn" id="chatAttachBtn" title="Attach file">📎</button>
+                    <button class="send-btn" id="sendMsgBtn">Send</button>
+                </div>
+
+                <!-- Chat bubbles -->
+                <div id="chatMessages"></div>
+
+                <!-- Recent -->
+                <div>
+                    <div class="section-label">Recent</div>
+                    <!-- Stat chips -->
+                    <div class="stats-bar" id="statsBar">
+                        <div class="stat-card">
+                            <div class="stat-val" id="statSent">0</div>
+                            <div class="stat-lbl">Sent</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-val" id="statRecv">0</div>
+                            <div class="stat-lbl">Received</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-val" id="statMB">0</div>
+                            <div class="stat-lbl">Total MB</div>
+                        </div>
+                    </div>
+                    <div id="recentList">
+                        <div class="empty-item" id="recentEmpty">No transfers yet</div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Bottom Sheet -->
+        <div class="bottom-sheet" id="activitySheet">
+            <div class="sheet-handle-row" id="sheetToggle">
+                <div class="sheet-handle"></div>
+                <div class="sheet-title">Activity</div>
+                <div class="badge" id="actBadge"></div>
+            </div>
+            <div class="sheet-body" id="actBody">
+                <div class="empty-item" id="actEmpty">Nothing in progress</div>
+            </div>
+        </div>
+
+        <!-- Transfer pill -->
+        <div id="transferAnim">
+            <span class="t-peer" id="t-from">💻</span>
+            <div class="t-dots">
+                <div class="t-dot"></div>
+                <div class="t-dot"></div>
+                <div class="t-dot"></div>
+            </div>
+            <span class="t-peer" id="t-to">☁️</span>
+            <div class="t-info">
+                <div id="t-direction">Sending…</div>
+                <div id="t-progress">0%</div>
+                <div id="t-speed"></div>
+            </div>
+        </div>
+
+        <!-- Settings -->
+        <div id="settingsPanel">
+            <div class="settings-card">
+                <div class="settings-hdr">
+                    <h2>Settings</h2>
+                    <button class="close-btn" id="settingsCloseBtn">✕</button>
+                </div>
+                <div class="s-section">
+                    <div class="s-label">Pair a New Device</div>
+                    <button class="pill-btn" id="pairBtnSettings" style="width:100%">Show QR Code</button>
+                    <div id="qrWrap">
+                        <div id="qrcode"></div>
+                        <div class="qr-url" id="qrUrlLabel"></div>
+                    </div>
+                </div>
+                <div class="s-section">
+                    <div class="s-label">Preferences</div>
+                    <div class="s-item">
+                        <div>
+                            <div class="s-item-title">Notifications</div>
+                            <div class="s-item-sub">Alert on received files & messages</div>
+                        </div>
+                        <button class="toggle" id="notifToggle"></button>
+                    </div>
+                    <div class="s-item">
+                        <div>
+                            <div class="s-item-title">Always-On Sync</div>
+                            <div class="s-item-sub">Prevents sleep during transfers</div>
+                        </div>
+                        <button class="toggle on" id="syncToggle"></button>
+                    </div>
+                </div>
+                <div class="s-section">
+                    <div class="s-label">Stats</div>
+                    <div class="s-item">
+                        <div>
+                            <div class="s-item-title">Files Sent</div>
+                        </div>
+                        <div id="sStatSent" style="font-size:.88rem;font-weight:600;color:var(--accent)">0</div>
+                    </div>
+                    <div class="s-item">
+                        <div>
+                            <div class="s-item-title">Files Received</div>
+                        </div>
+                        <div id="sStatRecv" style="font-size:.88rem;font-weight:600;color:var(--ok)">0</div>
+                    </div>
+                    <div class="s-item">
+                        <div>
+                            <div class="s-item-title">Total Transferred</div>
+                        </div>
+                        <div id="sStatMB" style="font-size:.88rem;font-weight:600;color:var(--text2)">0 MB</div>
+                    </div>
+                    <div class="s-item">
+                        <div>
+                            <div class="s-item-title">Last Device</div>
+                            <div class="s-item-sub" id="sLastDevice">Never connected</div>
+                        </div>
+                    </div>
+                    <div class="s-item">
+                        <div>
+                            <div class="s-item-title">Last Connected</div>
+                        </div>
+                        <div id="sLastTime" style="font-size:.78rem;color:var(--text2)">—</div>
+                    </div>
+                </div>
+                <button class="logout-btn" id="logoutBtn">Sign Out</button>
+            </div>
+        </div>
+
+        <!-- Hidden JS-compat elements -->
+        <div id="deviceList" style="display:none"></div>
+        <div id="emptyState" style="display:none"></div>
+        <div id="actionBar" style="display:none"></div>
+        <div id="previewList" style="display:none"></div>
+        <div id="previewEmptyState" style="display:none"></div>
+
+        <!-- Preview Modal -->
+        <div id="previewModal">
+            <div class="preview-topbar">
+                <div class="preview-filename" id="previewFilename">Filename</div>
+                <div class="preview-actions">
+                    <a class="preview-dl" id="previewDl" download>⬇ Save</a>
+                    <button class="preview-close" id="previewClose">✕</button>
+                </div>
+            </div>
+            <div class="preview-body" id="previewBody"></div>
+        </div>
+        <div id="chatStatus" style="display:none"></div>
+        <div id="qrContainer" style="display:none"></div>
+
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/simple-peer/9.11.1/simplepeer.min.js"></script>
+    <script>
+        /* ═══ AUTH ═══ */
+        const USERS = { 'admin@test.com': '123456789', 'user@test.com': 'password123' };
+        let loggedIn = localStorage.getItem('beamdrop_auth') === '1';
+        if (loggedIn) { document.getElementById('loginScreen').classList.add('hidden'); document.getElementById('appScreen').classList.remove('hidden'); }
+
+        document.getElementById('loginBtn').addEventListener('click', () => {
+            const e = document.getElementById('loginEmail').value.trim();
+            const p = document.getElementById('loginPassword').value;
+            const err = document.getElementById('loginError');
+            if (USERS[e] === p) {
+                localStorage.setItem('beamdrop_auth', '1'); err.textContent = '';
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('appScreen').classList.remove('hidden');
+            } else { err.textContent = 'Invalid email or password.'; }
+        });
+        document.getElementById('loginPassword').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('loginBtn').click(); });
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            localStorage.removeItem('beamdrop_auth'); location.reload();
+        });
+
+        /* ═══ CORE STATE ═══ */
+        const socket = io();
+        let myId = localStorage.getItem('deviceId');
+        if (!myId) { myId = 'dev_' + Math.random().toString(36).substr(2, 9); localStorage.setItem('deviceId', myId); }
+
+        const getDeviceData = () => {
+            const ua = navigator.userAgent;
+            let type = 'Desktop', icon = '💻';
+            if (/android/i.test(ua)) { type = 'Android'; icon = '📱'; }
+            else if (/iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) { type = 'iPhone'; icon = '📱'; }
+            else if (/Mac OS X/.test(ua)) { type = 'Mac'; icon = '🖥️'; }
+            else if (/Windows/.test(ua)) { type = 'Windows'; icon = '🪟'; }
+            return { id: myId, name: `${type} Device`, type, icon };
+        };
+        const myData = getDeviceData();
+        const devices = new Map();
+        const peers = new Map();
+        const chatHistory = [];
+        let activePeerSocketId = null;
+
+        /* ═══ LEADER ELECTION ═══ */
+        const TAB_ID = Math.random().toString(36).slice(2);
+        let isLeaderTab = false;
+        function claimLeader() { localStorage.setItem('p2p_leader_tab', TAB_ID); isLeaderTab = true; }
+        function checkLeader() { isLeaderTab = localStorage.getItem('p2p_leader_tab') === TAB_ID; }
+        claimLeader();
+        window.addEventListener('focus', claimLeader);
+        window.addEventListener('storage', e => { if (e.key === 'p2p_leader_tab') checkLeader(); });
+        window.addEventListener('beforeunload', () => { if (isLeaderTab) localStorage.removeItem('p2p_leader_tab'); });
+
+        /* ═══ UI HELPERS ═══ */
+        function setConnPill(state, label) {
+            const pill = document.getElementById('connPill');
+            pill.className = 'conn-pill ' + state;
+            document.getElementById('connLabel').textContent = label;
+        }
+        function showConnectedView(show) {
+            document.getElementById('noDeviceView').style.display = show ? 'none' : '';
+            const cv = document.getElementById('connectedView');
+            if (show) cv.classList.add('visible'); else cv.classList.remove('visible');
+        }
+
+        /* ═══ TRANSFER ANIM ═══ */
+        const tAnim = document.getElementById('transferAnim');
+        const tProgress = document.getElementById('t-progress');
+        const tDirection = document.getElementById('t-direction');
+        const tSpeed = document.getElementById('t-speed');
+        let speedInterval, transferBytes = 0, lastBytes = 0;
+        function showTransferAnim(dir) {
+            tAnim.style.display = 'flex'; tSpeed.textContent = ''; transferBytes = 0; lastBytes = 0;
+            clearInterval(speedInterval);
+            speedInterval = setInterval(() => {
+                const d = transferBytes - lastBytes; lastBytes = transferBytes;
+                if (d > 0) tSpeed.textContent = `${(d / 1024 / 1024 * 2).toFixed(1)} MB/s`;
+            }, 500);
+            tDirection.textContent = dir === 'send' ? 'Broadcasting…' : 'Receiving…';
+            document.getElementById('t-from').textContent = dir === 'send' ? myData.icon : '☁️';
+            document.getElementById('t-to').textContent = dir === 'send' ? '☁️' : myData.icon;
+        }
+        function hideTransferAnim() { clearInterval(speedInterval); tAnim.style.display = 'none'; }
+        function updateAnimProgress(l, t) { tProgress.textContent = Math.floor(l / t * 100) + '%'; }
+
+        /* ═══ BOTTOM SHEET ═══ */
+        const sheet = document.getElementById('activitySheet');
+        document.getElementById('sheetToggle').addEventListener('click', () => sheet.classList.toggle('open'));
+        let activeTransferCount = 0;
+        function updateBadge() {
+            const b = document.getElementById('actBadge');
+            if (activeTransferCount > 0) { b.style.display = 'block'; b.textContent = activeTransferCount; }
+            else { b.style.display = 'none'; }
+        }
+        function openSheet() { sheet.classList.add('open'); }
+
+        /* ═══ DROP ZONE ═══ */
+        const dropZone = document.getElementById('dropZone');
+        dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+        dropZone.addEventListener('drop', e => {
+            e.preventDefault(); dropZone.classList.remove('drag-over');
+            if (!activePeerSocketId) return alert('Not connected yet.');
+            handleFiles(activePeerSocketId, e.dataTransfer.files);
+        });
+        document.getElementById('fileInput').addEventListener('change', e => {
+            if (!activePeerSocketId) return alert('Not connected yet.');
+            handleFiles(activePeerSocketId, e.target.files); e.target.value = '';
+        });
+
+        /* ═══ PASTE & SEND ═══ */
+        document.getElementById('pasteBtn').addEventListener('click', async () => {
+            try {
+                const txt = await navigator.clipboard.readText();
+                if (!txt.trim()) return alert('Clipboard is empty.');
+                if (!activePeerSocketId) return alert('Not connected yet.');
+                const peer = peers.get(activePeerSocketId);
+                if (!peer || !peer.connected) return alert('Connection not ready.');
+                peer.send(JSON.stringify({ type: 'text', content: txt }));
+                renderChatMessage(txt, 'sent');
+                if (!document.getElementById('msgInputWrap').classList.contains('visible')) {
+                    document.getElementById('msgToggleBtn').click();
+                }
+            } catch (e) { alert('Cannot access clipboard. Try typing in the message box.'); }
+        });
+
+        /* ═══ MESSAGE TOGGLE ═══ */
+        document.getElementById('msgToggleBtn').addEventListener('click', () => {
+            const wrap = document.getElementById('msgInputWrap');
+            wrap.classList.toggle('visible');
+            if (wrap.classList.contains('visible')) document.getElementById('chatInput').focus();
+        });
+
+        /* ═══ SEND MESSAGE ═══ */
+        function sendChatMessage() {
+            const input = document.getElementById('chatInput');
+            const text = input.value.trim();
+            if (!text) return;
+            let peer = activePeerSocketId ? peers.get(activePeerSocketId) : null;
+            if (!peer || !peer.connected) {
+                for (const [sid, p] of peers.entries()) { if (p && p.connected) { peer = p; activePeerSocketId = sid; break; } }
+            }
+            if (!peer || !peer.connected) { alert('Not connected.'); return; }
+            peer.send(JSON.stringify({ type: 'text', content: text }));
+            renderChatMessage(text, 'sent');
+            input.value = '';
+        }
+        document.getElementById('sendMsgBtn').addEventListener('click', sendChatMessage);
+        document.getElementById('chatInput').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChatMessage(); } });
+        document.getElementById('chatAttachBtn').addEventListener('click', () => document.getElementById('chatFileInput').click());
+        document.getElementById('chatFileInput').addEventListener('change', e => {
+            if (!activePeerSocketId) return alert('Not connected yet.');
+            handleFiles(activePeerSocketId, e.target.files); e.target.value = '';
+        });
+
+        /* ═══ PASTE INTERCEPT ═══ */
+        window.addEventListener('paste', e => {
+            const txt = (e.clipboardData || window.clipboardData).getData('text');
+            if (!txt || !activePeerSocketId) return;
+            const peer = peers.get(activePeerSocketId);
+            if (!peer || !peer.connected) return;
+            peer.send(JSON.stringify({ type: 'text', content: txt }));
+            renderChatMessage(txt, 'sent');
+            if (!document.getElementById('msgInputWrap').classList.contains('visible')) document.getElementById('msgToggleBtn').click();
+        });
+
+        /* ═══ RECENT LIST ═══ */
+        function addRecentItem(meta, blobUrl) {
+            document.getElementById('recentEmpty').style.display = 'none';
+            const icons = { 'image': '🖼️', 'video': '🎥', 'audio': '🎧', 'application/pdf': '📄' };
+            const icon = (Object.entries(icons).find(([k]) => meta.mime && meta.mime.startsWith(k)) || ['', '📎'])[1];
+            const el = document.createElement('div');
+            el.className = 'recent-item';
+            el.innerHTML = `
+    <div class="recent-icon">${icon}</div>
+    <div class="recent-info">
+      <div class="recent-name">${meta.name}</div>
+      <div class="recent-meta">${(meta.size / 1024 / 1024).toFixed(2)} MB</div>
+    </div>
+    ${blobUrl ? `<a class="save-btn" href="${blobUrl}" download="${meta.name}">⬇ Save</a>` : ''}
+  `;
+            const list = document.getElementById('recentList');
+            list.insertBefore(el, list.children[1] || null);
+        }
+
+        /* ═══ CHAT RENDER ═══ */
+        function renderChatMessage(text, direction) {
+            const box = document.getElementById('chatMessages');
+            const isSent = direction === 'sent';
+            chatHistory.push({ text, direction });
+            const el = document.createElement('div');
+            el.style.cssText = `display:flex;justify-content:${isSent ? 'flex-end' : 'flex-start'};margin-bottom:.4rem`;
+            el.innerHTML = `<div style="max-width:80%;background:${isSent ? 'var(--accent)' : 'var(--surface2)'};color:${isSent ? '#fff' : 'var(--text)'};border-radius:15px;border-bottom-${isSent ? 'right' : 'left'}-radius:3px;padding:.55rem .85rem;font-size:.85rem;line-height:1.5;word-break:break-word">
+    <div>${text}</div>
+    <div style="font-size:.62rem;color:${isSent ? 'rgba(255,255,255,.5)' : 'var(--text3)'};margin-top:3px;text-align:${isSent ? 'right' : 'left'}">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+  </div>`;
+            box.appendChild(el); box.scrollTop = box.scrollHeight;
+            if (!document.getElementById('msgInputWrap').classList.contains('visible')) document.getElementById('msgToggleBtn').click();
+        }
+        function renderChatFile(name, size, mime, blobUrl, direction) {
+            const box = document.getElementById('chatMessages');
+            const isSent = direction === 'sent';
+            const icon = mime.startsWith('image/') ? '🖼️' : mime.startsWith('video/') ? '🎥' : mime.startsWith('audio/') ? '🎧' : mime === 'application/pdf' ? '📄' : '📎';
+            const el = document.createElement('div');
+            el.style.cssText = `display:flex;justify-content:${isSent ? 'flex-end' : 'flex-start'};margin-bottom:.4rem`;
+            el.innerHTML = `<div style="max-width:80%;background:${isSent ? 'var(--accent)' : 'var(--surface2)'};color:${isSent ? '#fff' : 'var(--text)'};border-radius:15px;border-bottom-${isSent ? 'right' : 'left'}-radius:3px;padding:.55rem .85rem;font-size:.85rem">
+    <div style="display:flex;align-items:center;gap:8px">
+      <span style="font-size:1.3rem">${icon}</span>
+      <div><div style="font-weight:600;font-size:.8rem">${name}</div><div style="font-size:.68rem;opacity:.7">${(size / 1024 / 1024).toFixed(2)} MB</div></div>
+    </div>
+    ${!isSent ? `<a href="${blobUrl}" download="${name}" style="display:block;margin-top:7px;color:var(--accent);font-size:.72rem;text-decoration:none;font-weight:500">⬇ Download</a>` : ''}
+    <div style="font-size:.62rem;color:${isSent ? 'rgba(255,255,255,.5)' : 'var(--text3)'};margin-top:4px;text-align:${isSent ? 'right' : 'left'}">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+  </div>`;
+            box.appendChild(el); box.scrollTop = box.scrollHeight;
+        }
+
+        /* ═══ NOTIFICATION ═══ */
+        function showNotification(title, body) {
+            if (document.visibilityState === 'visible') return;
+            if (Notification.permission === 'granted') new Notification(title, { body, icon: '/favicon.ico' });
+        }
+
+        /* ═══ RESUMABLE TRANSFER ENGINE ═══ */
+        const CHUNK_SIZE = 256 * 1024;
+        const pendingTransfers = new Map();
+        const incomingTransfers = new Map();
+        function uid() { return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c => (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)); }
+
+        async function handleFiles(socketId, files) {
+            const peer = peers.get(socketId || activePeerSocketId);
+            if (!peer || !peer.connected) return alert('Not connected.');
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const transferId = uid();
+                const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+                const meta = { type: 'file-metadata', transferId, name: file.name, size: file.size, mime: file.type || 'application/octet-stream', totalChunks, chunkSize: CHUNK_SIZE };
+                pendingTransfers.set(transferId, { file, meta, socketId: socketId || activePeerSocketId, fromChunk: 0 });
+                peer.send(JSON.stringify(meta));
+            }
+        }
+
+        async function doSendChunks(transferId, fromChunk) {
+            const entry = pendingTransfers.get(transferId);
+            if (!entry) return;
+            const { file, meta, socketId } = entry;
+            const peer = peers.get(socketId);
+            if (!peer || !peer.connected) return;
+            entry.fromChunk = fromChunk;
+            showTransferAnim('send');
+            activeTransferCount++; updateBadge(); openSheet();
+            let bytesSent = fromChunk * meta.chunkSize;
+            for (let i = fromChunk; i < meta.totalChunks; i++) {
+                if (!peer.connected) { entry.fromChunk = i; return; }
+                const buffer = await file.slice(i * meta.chunkSize, i * meta.chunkSize + meta.chunkSize).arrayBuffer();
+                peer.send(JSON.stringify({ type: 'chunk-header', transferId, index: i }));
+                while (peer._channel && peer._channel.bufferedAmount > 4 * 1024 * 1024) await new Promise(r => setTimeout(r, 15));
+                peer.send(buffer);
+                bytesSent += buffer.byteLength; transferBytes = bytesSent;
+                updateAnimProgress(bytesSent, file.size);
+            }
+            pendingTransfers.delete(transferId);
+            activeTransferCount = Math.max(0, activeTransferCount - 1); updateBadge();
+            hideTransferAnim();
+            addRecentItem({ name: file.name, size: file.size, mime: file.type }, URL.createObjectURL(file));
+            renderChatFile(file.name, file.size, file.type, URL.createObjectURL(file), 'sent');
+        }
+
+        function resumePendingTransfers(socketId) {
+            pendingTransfers.forEach((entry, transferId) => {
+                if (entry.socketId !== socketId) return;
+                const peer = peers.get(socketId);
+                if (peer && peer.connected) peer.send(JSON.stringify(entry.meta));
+            });
+        }
+
+        async function saveReceivedFile(blob, meta) {
+            if (window.showSaveFilePicker) {
+                try {
+                    const h = await window.showSaveFilePicker({ suggestedName: meta.name });
+                    const w = await h.createWritable(); await w.write(blob); await w.close(); return;
+                } catch (e) { }
+            }
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = meta.name;
+            document.body.appendChild(a); a.click();
+            setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url) }, 1000);
+        }
+
+        /* ═══ PEER CREATION ═══ */
+        function createPeer(socketId, initiator) {
+            const existing = peers.get(socketId);
+            if (existing) {
+                if (existing.connected) return existing;
+                if (!existing.destroyed) existing.destroy();
+                peers.delete(socketId);
+            }
+            const peer = new SimplePeer({ initiator, trickle: false });
+            let lastPong = Date.now(), pingInterval, pongCheck;
+
+            peer.on('signal', data => socket.emit('signal', { to: socketId, signal: data }));
+
+            peer.on('connect', () => {
+                activePeerSocketId = socketId;
+                const devInfo = devices.get(socketId);
+                setConnPill('online', `${devInfo ? devInfo.icon : '📱'} ${devInfo ? devInfo.name : 'Device'}`);
+                showConnectedView(true);
+                window._unloadGuard = (e) => { e.preventDefault(); e.returnValue = ''; };
+                window.addEventListener('beforeunload', window._unloadGuard);
+                document.dispatchEvent(new Event('p2p-connected'));
+                if (Notification.permission === 'default') Notification.requestPermission();
+                resumePendingTransfers(socketId);
+                lastPong = Date.now();
+                pingInterval = setInterval(() => { if (peer.connected) peer.send(JSON.stringify({ type: 'ping' })); }, 5000);
+                pongCheck = setInterval(() => { if (peer.connected && Date.now() - lastPong > 15000) peer.destroy(); }, 5000);
+                // Save last connected device to localStorage
+                if (devInfo) saveLastDevice(devInfo);
+            });
+
+            peer.on('close', () => {
+                clearInterval(pingInterval); clearInterval(pongCheck);
+                peers.delete(socketId);
+                if (activePeerSocketId === socketId) {
+                    activePeerSocketId = null;
+                    setConnPill('connecting', 'Reconnecting…');
+                    if (devices.size === 0) showConnectedView(false);
+                }
+                if (window._unloadGuard) window.removeEventListener('beforeunload', window._unloadGuard);
+                document.dispatchEvent(new Event('p2p-disconnected'));
+                setTimeout(() => { if (devices.has(socketId) && !peers.has(socketId) && isLeaderTab) createPeer(socketId, true); }, 2000);
+            });
+
+            peer.on('error', err => {
+                console.warn('WebRTC error:', err.message);
+                peers.delete(socketId);
+                if (!peer.destroyed) peer.destroy();
+                setTimeout(() => { if (devices.has(socketId) && !peers.has(socketId) && isLeaderTab) createPeer(socketId, true); }, 2500);
+            });
+
+            /* DATA HANDLER */
+            let currentFile = null, chunks = [], bytesReceived = 0, currentChunkIndex = -1, currentTransferId = null;
+
+            function handleMsg(msg) {
+                if (msg.type === 'ping') { peer.send(JSON.stringify({ type: 'pong' })); return; }
+                if (msg.type === 'pong') { lastPong = Date.now(); return; }
+                if (msg.type === 'text') { renderChatMessage(msg.content, 'received'); showNotification('New Message 💬', msg.content.substring(0, 80)); return; }
+                if (msg.type === 'file-metadata') {
+                    const existing = incomingTransfers.get(msg.transferId);
+                    const resumeFrom = existing ? existing.received : 0;
+                    if (!existing) {
+                        incomingTransfers.set(msg.transferId, { meta: msg, chunks: new Array(msg.totalChunks), received: 0 });
+                        showTransferAnim('receive'); updateAnimProgress(0, msg.size);
+                        activeTransferCount++; updateBadge(); openSheet();
+                    }
+                    peer.send(JSON.stringify({ type: 'transfer-ack', transferId: msg.transferId, resumeFromChunk: resumeFrom }));
+                    return;
+                }
+                if (msg.type === 'chunk-header') { currentChunkIndex = msg.index; currentTransferId = msg.transferId; return; }
+                if (msg.type === 'transfer-ack') { doSendChunks(msg.transferId, msg.resumeFromChunk); return; }
+            }
+
+            peer.on('data', data => {
+                lastPong = Date.now();
+                if (typeof data === 'string') {
+                    try { handleMsg(JSON.parse(data)); } catch (e) { }
+                    return;
+                }
+                // Binary — try TextDecoder first (iOS Safari sends strings as Uint8Array)
+                let isJson = false;
+                try {
+                    const str = new TextDecoder().decode(data);
+                    if (str.startsWith('{')) { handleMsg(JSON.parse(str)); isJson = true; }
+                } catch (e) { }
+                if (isJson) return;
+
+                // True binary chunk
+                const xfr = incomingTransfers.get(currentTransferId);
+                if (xfr && currentChunkIndex >= 0) {
+                    xfr.chunks[currentChunkIndex] = data;
+                    xfr.received = Math.max(xfr.received, currentChunkIndex + 1);
+                    const bytesNow = xfr.received * xfr.meta.chunkSize;
+                    transferBytes = bytesNow;
+                    updateAnimProgress(Math.min(bytesNow, xfr.meta.size), xfr.meta.size);
+                    if (xfr.received >= xfr.meta.totalChunks) {
+                        const blob = new Blob(xfr.chunks, { type: xfr.meta.mime });
+                        const blobUrl = URL.createObjectURL(blob);
+                        activeTransferCount = Math.max(0, activeTransferCount - 1); updateBadge();
+                        hideTransferAnim();
+                        renderChatFile(xfr.meta.name, xfr.meta.size, xfr.meta.mime, blobUrl, 'received');
+                        addRecentItem(xfr.meta, blobUrl);
+                        showNotification('File Received 📎', `${xfr.meta.name} (${(xfr.meta.size / 1024 / 1024).toFixed(2)} MB)`);
+                        incomingTransfers.delete(currentTransferId);
+                        currentTransferId = null; currentChunkIndex = -1;
+                    }
+                    return;
+                }
+                // Legacy fallback
+                if (currentFile) {
+                    chunks.push(data); bytesReceived += (data.byteLength || data.length); transferBytes = bytesReceived;
+                    updateAnimProgress(bytesReceived, currentFile.size);
+                    if (bytesReceived >= currentFile.size) {
+                        const blob = new Blob(chunks, { type: currentFile.mime });
+                        const blobUrl = URL.createObjectURL(blob);
+                        hideTransferAnim();
+                        renderChatFile(currentFile.name, currentFile.size, currentFile.mime, blobUrl, 'received');
+                        addRecentItem(currentFile, blobUrl);
+                        showNotification('File Received 📎', currentFile.name);
+                        currentFile = null; chunks = []; bytesReceived = 0;
+                    }
+                }
+            });
+
+            peers.set(socketId, peer);
+            return peer;
+        }
+
+        /* ═══ DEVICE RENDERING ═══ */
+        const renderDevices = () => {
+            if (devices.size === 0) {
+                if (!activePeerSocketId) { setConnPill('offline', 'No device'); showConnectedView(false); }
+                return;
+            }
+            devices.forEach((data, socketId) => {
+                const existing = peers.get(socketId);
+                if (existing && existing.connected) {
+                    activePeerSocketId = socketId;
+                    setConnPill('online', `${data.icon} ${data.name}`);
+                    showConnectedView(true);
+                } else {
+                    setConnPill('connecting', 'Connecting…');
+                    showConnectedView(true);
+                    if (existing && !existing.connected && !existing.destroyed) { existing.destroy(); peers.delete(socketId); }
+                    if (isLeaderTab) setTimeout(() => { if (!peers.has(socketId)) createPeer(socketId, true); }, 300);
+                }
+            });
+        };
+
+        /* ═══ SOCKET EVENTS ═══ */
+        socket.on('connect', () => {
+            const params = new URLSearchParams(window.location.search);
+            const token = params.get('pair');
+            if (token) socket.emit('pair_join', { token, deviceData: myData });
+            else socket.emit('device_reconnected', myData);
+            socket.emit('request_sync', { deviceData: myData });
+        });
+        socket.on('device_sync', msg => {
+            if (msg.deviceData && msg.deviceData.id !== myData.id) {
+                if (!msg.deviceData.connectedAt) msg.deviceData.connectedAt = Date.now();
+                devices.set(msg.id, msg.deviceData); renderDevices();
+            }
+        });
+        socket.on('device_joined', msg => {
+            if (msg.deviceData && msg.deviceData.id !== myData.id) {
+                if (!msg.deviceData.connectedAt) msg.deviceData.connectedAt = Date.now();
+                devices.set(msg.id, msg.deviceData); renderDevices();
+            }
+        });
+        socket.on('request_sync_dispatch', msg => { socket.emit('sync_response', { requesterId: msg.requesterId, deviceData: myData }); });
+        socket.on('device_left', msg => {
+            devices.delete(msg.id);
+            if (peers.has(msg.id)) { peers.get(msg.id).destroy(); peers.delete(msg.id); }
+            renderDevices();
+        });
+        socket.on('signal', data => {
+            let p = peers.get(data.from);
+            if (p && !p.connected && !p.destroyed) {
+                if (socket.id > data.from) { p.destroy(); peers.delete(data.from); p = null; }
+            }
+            if (!p) p = createPeer(data.from, false);
+            try { p.signal(data.signal); } catch (e) { console.warn('signal err', e); }
+        });
+
+        /* ═══ PAIR / SETTINGS ═══ */
+        document.getElementById('pairBtn').addEventListener('click', () => document.getElementById('gearBtn').click());
+        document.getElementById('gearBtn').addEventListener('click', () => {
+            document.getElementById('settingsPanel').classList.add('visible');
+        });
+        document.getElementById('settingsCloseBtn').addEventListener('click', () => {
+            document.getElementById('settingsPanel').classList.remove('visible');
+        });
+        document.getElementById('settingsPanel').addEventListener('click', e => {
+            if (e.target === document.getElementById('settingsPanel')) document.getElementById('settingsPanel').classList.remove('visible');
+        });
+        let qrGenerated = false;
+        document.getElementById('pairBtnSettings').addEventListener('click', async () => {
+            // Fetch LAN config to get the correct IP and HTTP port for mobile
+            let lanOrigin = window.location.origin;
+            try {
+                const cfg = await fetch('/api/lan-config').then(r => r.json());
+                lanOrigin = `http://${cfg.lanIp}:${cfg.httpPort}`;
+            } catch (e) { console.warn('Could not fetch LAN config, using current origin'); }
+
+            socket.emit('generate_pairing', res => {
+                const url = `${lanOrigin}/?pair=${res.token}`;
+                const wrap = document.getElementById('qrWrap');
+                wrap.classList.add('visible');
+                document.getElementById('qrUrlLabel').textContent = url;
+                if (!qrGenerated) {
+                    new QRCode(document.getElementById('qrcode'), { text: url, width: 160, height: 160, colorDark: '#F0EFF8', colorLight: '#17171F', correctLevel: QRCode.CorrectLevel.H });
+                    qrGenerated = true;
+                }
+            });
+        });
+        document.getElementById('notifToggle').addEventListener('click', function () {
+            this.classList.toggle('on');
+            if (this.classList.contains('on')) Notification.requestPermission();
+        });
+
+        /* ═══ ALWAYS-ON SYNC ENGINE ═══ */
+        let wakeLock = null, audioCtx = null, webLockResolve = null;
+        async function requestWakeLock() { try { if ('wakeLock' in navigator) { wakeLock = await navigator.wakeLock.request('screen'); } } catch (e) { } }
+        function releaseWakeLock() { if (wakeLock) { wakeLock.release(); wakeLock = null; } }
+        function startAudioHeartbeat() { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); const o = audioCtx.createOscillator(), g = audioCtx.createGain(); g.gain.value = 0.00001; o.connect(g); g.connect(audioCtx.destination); o.start(); }
+        function stopAudioHeartbeat() { if (audioCtx) { audioCtx.close(); audioCtx = null; } }
+        function requestWebLock() { if ('locks' in navigator) navigator.locks.request('p2p-tunnel', { mode: 'shared' }, () => new Promise(r => { webLockResolve = r; })); }
+        function releaseWebLock() { if (webLockResolve) { webLockResolve(); webLockResolve = null; } }
+        document.addEventListener('p2p-connected', () => { requestWakeLock(); startAudioHeartbeat(); requestWebLock(); });
+        document.addEventListener('p2p-disconnected', () => { releaseWakeLock(); stopAudioHeartbeat(); releaseWebLock(); });
+        document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && wakeLock === null && activePeerSocketId) requestWakeLock(); });
+
+        /* ═══ STATS TRACKING ═══ */
+        const STATS_KEY = 'beamdrop_stats';
+        function loadStats() {
+            try { return JSON.parse(localStorage.getItem(STATS_KEY)) || { sent: 0, recv: 0, totalBytes: 0, lastDevice: null, lastTime: null }; }
+            catch (e) { return { sent: 0, recv: 0, totalBytes: 0, lastDevice: null, lastTime: null }; }
+        }
+        function saveStats(s) { localStorage.setItem(STATS_KEY, JSON.stringify(s)); }
+        function updateStatsUI() {
+            const s = loadStats();
+            const fmtMB = b => b >= 1073741824 ? (b / 1073741824).toFixed(1) + ' GB' : b >= 1048576 ? (b / 1048576).toFixed(1) + ' MB' : b >= 1024 ? (b / 1024).toFixed(0) + ' KB' : b + ' B';
+            el('statSent') && (el('statSent').textContent = s.sent);
+            el('statRecv') && (el('statRecv').textContent = s.recv);
+            el('statMB') && (el('statMB').textContent = fmtMB(s.totalBytes));
+            el('sStatSent') && (el('sStatSent').textContent = s.sent);
+            el('sStatRecv') && (el('sStatRecv').textContent = s.recv);
+            el('sStatMB') && (el('sStatMB').textContent = fmtMB(s.totalBytes));
+            if (s.lastDevice) {
+                el('sLastDevice') && (el('sLastDevice').textContent = `${s.lastDevice.icon} ${s.lastDevice.name}`);
+                el('sLastTime') && (el('sLastTime').textContent = s.lastTime ? new Date(s.lastTime).toLocaleString() : '—');
+            }
+            // Show last device card on waiting screen
+            if (s.lastDevice) {
+                const card = el('lastDeviceCard');
+                if (card) {
+                    card.style.display = 'flex';
+                    el('ldIcon') && (el('ldIcon').textContent = s.lastDevice.icon || '📱');
+                    el('ldName') && (el('ldName').textContent = s.lastDevice.name);
+                    el('ldMeta') && (el('ldMeta').textContent = s.lastTime ? 'Last connected ' + timeAgo(new Date(s.lastTime)) : 'Previously connected');
+                }
+            }
+        }
+        function timeAgo(date) {
+            const diff = Math.floor((Date.now() - date) / 1000);
+            if (diff < 60) return 'just now';
+            if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+            if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+            return Math.floor(diff / 86400) + 'd ago';
+        }
+        function el(id) { return document.getElementById(id); }
+        function trackSent(bytes) { const s = loadStats(); s.sent++; s.totalBytes += bytes; saveStats(s); updateStatsUI(); }
+        function trackRecv(bytes) { const s = loadStats(); s.recv++; s.totalBytes += bytes; saveStats(s); updateStatsUI(); }
+        function saveLastDevice(devInfo) {
+            const s = loadStats(); s.lastDevice = { name: devInfo.name, icon: devInfo.icon }; s.lastTime = Date.now(); saveStats(s); updateStatsUI();
+        }
+        // Init stats on load
+        if (loggedIn) updateStatsUI();
+
+        /* ═══ PREVIEW MODAL ═══ */
+        let previewStore = []; // { name, size, mime, blobUrl }
+        function openPreview(item) {
+            const modal = el('previewModal'); const body = el('previewBody'); const dl = el('previewDl');
+            if (!modal || !body) return;
+            el('previewFilename').textContent = item.name;
+            dl.href = item.blobUrl; dl.download = item.name;
+            body.innerHTML = '';
+            const mime = item.mime || '';
+            if (mime.startsWith('image/')) {
+                const img = document.createElement('img'); img.src = item.blobUrl; body.appendChild(img);
+            } else if (mime.startsWith('video/')) {
+                const v = document.createElement('video'); v.src = item.blobUrl; v.controls = true; v.autoplay = true; body.appendChild(v);
+            } else if (mime.startsWith('audio/')) {
+                const a = document.createElement('audio'); a.src = item.blobUrl; a.controls = true; body.appendChild(a);
+            } else if (mime === 'application/pdf') {
+                const fr = document.createElement('iframe'); fr.src = item.blobUrl; body.appendChild(fr);
+            } else if (mime.startsWith('text/')) {
+                fetch(item.blobUrl).then(r => r.text()).then(txt => { const pre = document.createElement('pre'); pre.textContent = txt; body.appendChild(pre); });
+            } else {
+                body.innerHTML = `<div class="prev-no"><div class="pi">📎</div><p>${item.name}</p><p style="font-size:.78rem;margin-top:.5rem">Preview not available</p></div>`;
+            }
+            modal.classList.add('open');
+        }
+        function closePreview() { const m = el('previewModal'); if (m) m.classList.remove('open'); }
+        el('previewClose') && el('previewClose').addEventListener('click', closePreview);
+        el('previewModal') && el('previewModal').addEventListener('click', e => { if (e.target === el('previewModal')) closePreview(); });
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') closePreview(); });
+
+        /* ═══ PATCH addRecentItem WITH PREVIEW + STATS ═══ */
+        const _origAddRecent = addRecentItem;
+        function addRecentItem(meta, blobUrl, isSent) {
+            // Track stats
+            if (isSent) trackSent(meta.size || 0); else trackRecv(meta.size || 0);
+            // Store for preview
+            const item = { name: meta.name, size: meta.size, mime: meta.mime, blobUrl };
+            previewStore.unshift(item);
+            // Build card
+            document.getElementById('recentEmpty').style.display = 'none';
+            const icons = { 'image': '🖼️', 'video': '🎥', 'audio': '🎧' };
+            const icon = Object.entries(icons).find(([k]) => meta.mime && meta.mime.startsWith(k))?.[1] || (meta.mime === 'application/pdf' ? '📄' : '📎');
+            const el2 = document.createElement('div');
+            el2.className = 'recent-item'; el2.style.cursor = 'pointer';
+            el2.innerHTML = `
+              <div class="recent-icon">${icon}</div>
+              <div class="recent-info">
+                <div class="recent-name">${meta.name}</div>
+                <div class="recent-meta">${meta.size ? (meta.size / 1024 / 1024).toFixed(2) + ' MB' : ''}${isSent ? ' · Sent' : ' · Received'}</div>
+              </div>
+              ${blobUrl ? `<a class="save-btn" href="${blobUrl}" download="${meta.name}" onclick="event.stopPropagation()">⬇ Save</a>` : ''}            `;
+            el2.addEventListener('click', () => openPreview(item));
+            const list = document.getElementById('recentList');
+            const after = list.children[1] || null;
+            list.insertBefore(el2, after);
+        }
+    </script>
+</body>
+
+</html>
